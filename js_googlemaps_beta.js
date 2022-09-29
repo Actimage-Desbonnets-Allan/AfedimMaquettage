@@ -331,7 +331,7 @@ function addMarker(markerFromViewModel) {
         console.log(markerFromViewModel);
         console.log(JSON.stringify(markerFromViewModel));
     }
-
+	
     let key = markerFromViewModel.Coordonnees.PoiId;
     let lat = markerFromViewModel.Coordonnees.Latitude;
     let long = markerFromViewModel.Coordonnees.Longitude;
@@ -340,7 +340,8 @@ function addMarker(markerFromViewModel) {
 
     var image = {
         url: urlImage,
-        scaledSize: new google.maps.Size(scaledSizeImage, scaledSizeImage)
+        scaledSize: new google.maps.Size(scaledSizeImage, scaledSizeImage),
+		
     };
 
     var positionTemp = new google.maps.LatLng(lat, long);
@@ -349,19 +350,33 @@ function addMarker(markerFromViewModel) {
         position: positionTemp,
         map: map,
         icon: image,
+		metier: markerFromViewModel.Metier,
+		isGpsExact: markerFromViewModel.IsGpsExact,
     });
+	
+	
+	if (marker.metier == metierAncien && !marker.isGpsExact) {
+		var circle = new google.maps.Circle({
+		map: map,
+		strokeColor: "#004494",
+		strokeOpacity: 0.8,
+		strokeWeight: 0.2,
+		fillColor: "#004494",
+		fillOpacity: 0.30,	
+		radius: 250
+		});
+		circle.bindTo('center', marker, 'position'); }
 
     /* Ajoute un event click */
     google.maps.event.addListener(marker, 'click', function() {
         map.panTo(marker.getPosition());
     });
 
-
     /* Ajout de la position aux Bounds pour futur affichage de la carte avec tous les markers en vue */
     bounds.extend(marker.position);
 
     markers.push(marker);
-
+	
     if (varDebug) {
         console.log('addMarker END');
     }
@@ -508,10 +523,10 @@ function deleteMarkers() {
 			    icon: iconMarker,
 			});
       
-
 			google.maps.event.addListener(marker, 'click', (function (marker, i) {
 			    return function () {
 			        var pinData = productsFromViewModel[i];
+					
 					var urlImageLot;
 					if(!pinData.ImagePath)
 						urlImageLot = urlSite + "/fr/images/visuel-defaut.png";
@@ -519,7 +534,7 @@ function deleteMarkers() {
 						urlImageLot = pinData.ImagePath;
 
 			        tabInfoWindow.close();
-
+			
 			        if (parcours != null) {
 			            switch (parcours) {
 			                case 1:
@@ -535,8 +550,11 @@ function deleteMarkers() {
 			                case 2:
 			                    // parcours acheter
 			                    if (pinData.Metier == metierAncien) {
-			                        if (pinData.Nature == "Appartement" && pinData.Etage != null) {
+			                        if (pinData.Nature == "Appartement" && pinData.Etage != null && !pinData.IsGpsExact) {
 			                            tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr>  </table>");
+			                        }
+									else if (pinData.Nature == "Appartement" && pinData.Etage != null && pinData.IsGpsExact) {
+			                            tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> </table>");
 			                        }
 			                        else {
 			                            tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");
@@ -559,19 +577,35 @@ function deleteMarkers() {
 			                    //parcours investir
 			                    if (pinData.Metier == metierAncien) {
 			                        if (pinData.Nature == "Appartement" && pinData.Etage != null) {
-			                            if (pinData.ListeFiscalite != null && pinData.ListeFiscalite.length > 0) {
-			                                tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <p style='font-size:11px;'>" + pinData.ListeFiscalite[0].FiscaStr + "</p> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");
+			                            if (pinData.ListeFiscalite != null && pinData.ListeFiscalite.length > 0 && !pinData.IsGpsExact) {
+			                                tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <p style='font-size:11px;'>" + pinData.ListeFiscalite[0].FiscaStr + "</p> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");											
 			                            }
+										else if (pinData.ListeFiscalite != null && pinData.ListeFiscalite.length > 0 && pinData.IsGpsExact) {
+											tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> </table>");											
+										}
 			                            else {
-			                                tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");
+											if (pinData.IsGpsExact) {
+												tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> </table>");												
+											}
+											else {
+												tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");												
+											}
 			                            }
 			                        }
 			                        else {
-			                            if (pinData.ListeFiscalite != null && pinData.ListeFiscalite.length > 0) {
-			                                tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <p style='font-size:11px;'>" + pinData.ListeFiscalite[0].FiscaStr + "</p> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");
+			                            if (pinData.ListeFiscalite != null && pinData.ListeFiscalite.length > 0 && !pinData.IsGpsExact) {
+			                                tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <p style='font-size:11px;'>" + pinData.ListeFiscalite[0].FiscaStr + "</p> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");											
 			                            }
+										else if (pinData.ListeFiscalite != null && pinData.ListeFiscalite.length > 0 && pinData.IsGpsExact) {
+											tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> </table>");											
+										}
 			                            else {
-			                                tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");
+											if (pinData.IsGpsExact) {
+												tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div class='ei_gly_ic_stairs' title='Etage' alt='Etage'>" + pinData.Etage + "</div> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> </table>");												
+											}
+											else {
+												tabInfoWindow.setContent("<table style='width:100%'> <tr> <td style='width: 30%;'> <div style='background-image: url(" + urlImageLot + ");width:100%;height:80px;background-position: center;align-items: center;overflow: hidden;display: flex;background-repeat: no-repeat;background-size: cover;' /> </td> <td style='width:50%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='zonetext'> <p style='margin: 0'> <strong style='color: red;'>" + pinData.Nom + "</strong> </p> <p style='color: grey; margin: 0;'>" + pinData.Emplacement + "</p> <p style='margin: 0;'><strong>" + pinData.PrixFloat.toLocaleString() + " EUR</strong></p> <div style='font-size:11px; margin: 0;' class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='zonepicto'> <div style='margin: 0;' class='ei_gly_ic_aspect_ratio' title='Surface' alt='Surface'> " + pinData.Taille + " m² </div> <br /> <br /> </div> <a id='lien' href='" + pinData.UrlProduct + "'> Voir + </a> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center; font-size: 11px;'> <span class='doux'> Positionnement approximatif du logement </span> </td> </tr> </table>");												
+											}
 			                            }
 			                        }
 			                    }
@@ -604,18 +638,18 @@ function deleteMarkers() {
 			                    break;
 
 			                default:
-			                    tabInfoWindow.setContent("<table style='width:100%'> <tr> <td> <img src='" + urlImageLot + "' style='width:100%' /> </td> <td style='width:64%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='C:P.C.F3_0.R7:D'> <p style='padding-top: 5%;'><strong class='_c1 bigger _c1' style='color: red;'>" + pinData.Nom + "</strong></p> <p style='padding: 2%; color: grey;'>" + pinData.Emplacement + "</p> <p style='padding: 2%;'><strong class='_c1 bigger _c1'>" + pinData.Prix + "</strong></p> <div class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='C:P.C.F3_0.R5:D'> <p><img width='20' title='Etage' alt='Etage' src='https://raw.githubusercontent.com/Actimage-Desbonnets-Allan/AfedimMaquettage/main/desbonal/iconebleue_etage.jpg'>" + pinData.Etage + "</p> <p><img width='20' title='Surface' alt='Surface' src='https://raw.githubusercontent.com/Actimage-Desbonnets-Allan/AfedimMaquettage/main/desbonal/iconebleue_surface.jpg'> " + pinData.Taille + " m²</p> </div><br><span class='ei_buttonbar' id='C:P.C.F3_0.B:S'><span class='ei_button' id='C:P.C.F3_0.R6:RootSpan'><a class='ei_btn ei_btn_fn_forward' id='C:P.C.F3_0.R6:link' href='" + pinData.UrlProduct + "'><span class='_c1 ei_btn_body _c1' id='C:P.C.F3_0.R6:labelsubmit'><span class='_c1 ei_btn_tlcorn _c1'></span><span class='_c1 ei_btn_label _c1'>Voir +</span><span class='_c1 ei_iblock ei_btn_pic _c1' aria-hidden='true'>&nbsp;</span></span><span class='_c1 ei_btn_footer _c1'><span class='_c1 ei_btn_blcorn _c1'></span></span></a></span></span> </div> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center;'> <span class='doux' >Positionnement approximatif du logement </span> </td> </tr> </table>");
+			                    tabInfoWindow.setContent("<table style='width:100%'> <tr> <td> <img src='" + urlImageLot + "' style='width:100%' /> </td> <td style='width:64%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='C:P.C.F3_0.R7:D'> <p style='padding-top: 5%;'><strong class='_c1 bigger _c1' style='color: red;'>" + pinData.Nom + "</strong></p> <p style='padding: 2%; color: grey;'>" + pinData.Emplacement + "</p> <p style='padding: 2%;'><strong class='_c1 bigger _c1'>" + pinData.Prix + "</strong></p> <div class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='C:P.C.F3_0.R5:D'> <p><img width='20' title='Etage' alt='Etage' src='https://raw.githubusercontent.com/Actimage-Desbonnets-Allan/AfedimMaquettage/main/desbonal/iconebleue_etage.jpg'>" + pinData.Etage + "</p> <p><img width='20' title='Surface' alt='Surface' src='https://raw.githubusercontent.com/Actimage-Desbonnets-Allan/AfedimMaquettage/main/desbonal/iconebleue_surface.jpg'> " + pinData.Taille + " m²</p> </div><br><span class='ei_buttonbar' id='C:P.C.F3_0.B:S'><span class='ei_button' id='C:P.C.F3_0.R6:RootSpan'><a class='ei_btn ei_btn_fn_forward' id='C:P.C.F3_0.R6:link' href='" + pinData.UrlProduct + "'><span class='_c1 ei_btn_body _c1' id='C:P.C.F3_0.R6:labelsubmit'><span class='_c1 ei_btn_tlcorn _c1'></span><span class='_c1 ei_btn_label _c1'>Voir +</span><span class='_c1 ei_iblock ei_btn_pic _c1' aria-hidden='true'>&nbsp;</span></span><span class='_c1 ei_btn_footer _c1'><span class='_c1 ei_btn_blcorn _c1'></span></span></a></span></span> </div> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center;'> <span class='doux' >Positionnement approximatif du logement </span> </td> </tr> </table>");								
 			            }
 			        }
 			        else
 			        {
-			            tabInfoWindow.setContent("<table style='width:100%'> <tr> <td> <img src='" + urlImageLot + "' style='width:100%' /> </td> <td style='width:64%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='C:P.C.F3_0.R7:D'> <p style='padding-top: 5%;'><strong class='_c1 bigger _c1' style='color: red;'>" + pinData.Nom + "</strong></p> <p style='padding: 2%; color: grey;'>" + pinData.Emplacement + "</p> <p style='padding: 2%;'><strong class='_c1 bigger _c1'>" + pinData.Prix + "</strong></p> <div class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='C:P.C.F3_0.R5:D'> <p><img width='20' title='Etage' alt='Etage' src='https://raw.githubusercontent.com/Actimage-Desbonnets-Allan/AfedimMaquettage/main/desbonal/iconebleue_etage.jpg'>" + pinData.Etage + "</p> <p><img width='20' title='Surface' alt='Surface' src='https://raw.githubusercontent.com/Actimage-Desbonnets-Allan/AfedimMaquettage/main/desbonal/iconebleue_surface.jpg'> " + pinData.Taille + " m²</p> </div><br><span class='ei_buttonbar' id='C:P.C.F3_0.B:S'><span class='ei_button' id='C:P.C.F3_0.R6:RootSpan'><a class='ei_btn ei_btn_fn_forward' id='C:P.C.F3_0.R6:link' href='" + pinData.UrlProduct + "'><span class='_c1 ei_btn_body _c1' id='C:P.C.F3_0.R6:labelsubmit'><span class='_c1 ei_btn_tlcorn _c1'></span><span class='_c1 ei_btn_label _c1'>Voir +</span><span class='_c1 ei_iblock ei_btn_pic _c1' aria-hidden='true'>&nbsp;</span></span><span class='_c1 ei_btn_footer _c1'><span class='_c1 ei_btn_blcorn _c1'></span></span></a></span></span> </div> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center;'> <span class='doux' >Positionnement approximatif du logement </span> </td> </tr> </table>");
+			            tabInfoWindow.setContent("<table style='width:100%'> <tr> <td> <img src='" + urlImageLot + "' style='width:100%' /> </td> <td style='width:64%'> <div class='ei_flex ei_flex_justcenter ei_flex_col ei_flex_alcenter ei_flex_gutter' id='C:P.C.F3_0.R7:D'> <p style='padding-top: 5%;'><strong class='_c1 bigger _c1' style='color: red;'>" + pinData.Nom + "</strong></p> <p style='padding: 2%; color: grey;'>" + pinData.Emplacement + "</p> <p style='padding: 2%;'><strong class='_c1 bigger _c1'>" + pinData.Prix + "</strong></p> <div class='ei_flex ei_flex_justcenter ei_flex_alcenter ei_flex_gutter' id='C:P.C.F3_0.R5:D'> <p><img width='20' title='Etage' alt='Etage' src='https://raw.githubusercontent.com/Actimage-Desbonnets-Allan/AfedimMaquettage/main/desbonal/iconebleue_etage.jpg'>" + pinData.Etage + "</p> <p><img width='20' title='Surface' alt='Surface' src='https://raw.githubusercontent.com/Actimage-Desbonnets-Allan/AfedimMaquettage/main/desbonal/iconebleue_surface.jpg'> " + pinData.Taille + " m²</p> </div><br><span class='ei_buttonbar' id='C:P.C.F3_0.B:S'><span class='ei_button' id='C:P.C.F3_0.R6:RootSpan'><a class='ei_btn ei_btn_fn_forward' id='C:P.C.F3_0.R6:link' href='" + pinData.UrlProduct + "'><span class='_c1 ei_btn_body _c1' id='C:P.C.F3_0.R6:labelsubmit'><span class='_c1 ei_btn_tlcorn _c1'></span><span class='_c1 ei_btn_label _c1'>Voir +</span><span class='_c1 ei_iblock ei_btn_pic _c1' aria-hidden='true'>&nbsp;</span></span><span class='_c1 ei_btn_footer _c1'><span class='_c1 ei_btn_blcorn _c1'></span></span></a></span></span> </div> </div> </td> </tr> <tr> <td colspan='2' style='text-align:center;'> <span class='doux' >Positionnement approximatif du logement </span> </td> </tr> </table>");						
 			        }
 
 			        tabInfoWindow.open(map, marker);
 			    }
 			})(marker, i));
-
+			
 			//création d'un objet plus global contenant l'id généré côté c#, le marker google, l'élément du dom et des bool d'état
 			var objMarker = 
 			{
@@ -625,8 +659,8 @@ function deleteMarkers() {
 				highlight : false,
 				highlightCard : false,
 				metier : dataMarker.Metier,
+				isGpsExact : dataMarker.IsGpsExact,
 			};
-
 			
 
 			//On sauvegarde l'objMarker créé dans le tableau
@@ -654,11 +688,11 @@ function deleteMarkers() {
 			 found = true;
 			 markersSearch[i].htmlElement = element; // on ajoute l'élément html qui n'était pas dispo lors du setProductMarkers à l'objMarker
 			 var objMarker = markersSearch[i];
- 
+			
 			 //action executée lors du mouseover sur le marker google
 			 google.maps.event.addListener(objMarker.markerGoogle, 'mouseover', (function (objMarker) {
 				 return function () {
-					 if (objMarker.metier == metierAncien) {
+					 if (objMarker.metier == metierAncien && !objMarker.isGpsExact) {
 						 cityCircle = new google.maps.Circle({
 							 strokeColor: "#004494",
 							 strokeOpacity: 0.8,
@@ -682,7 +716,7 @@ function deleteMarkers() {
 			 //action executée lors du mouseout sur le marker google
 			 google.maps.event.addListener(objMarker.markerGoogle,'mouseout', (function(objMarker) {
 				 return function () {
-					 if (objMarker.metier == metierAncien) {
+					 if (objMarker.metier == metierAncien && !objMarker.isGpsExact) {
           			 	cityCircle.setMap(null);
 					 }
 					 if(objMarker.highlightCard)
